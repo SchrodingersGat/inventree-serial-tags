@@ -15,8 +15,8 @@ from . import PLUGIN_VERSION
 
 logger = logging.getLogger('inventree')
 
-class SerialNumberTags(SettingsMixin, ValidationMixin, InvenTreePlugin):
 
+class SerialNumberTags(SettingsMixin, ValidationMixin, InvenTreePlugin):
     """SerialNumberTags - custom InvenTree plugin."""
 
     # Plugin metadata
@@ -88,7 +88,7 @@ class SerialNumberTags(SettingsMixin, ValidationMixin, InvenTreePlugin):
             - stock_item: The stock item instance to validate against
         """
     
-        # Tags can be comma-separated        
+        # Tags can be comma-separated
         for tag in self.get_tags_for_part(part_instance):
 
             tag = tag.strip()
@@ -139,7 +139,7 @@ class SerialNumberTags(SettingsMixin, ValidationMixin, InvenTreePlugin):
             return stock.models.StockItem.objects.none()
         
         # Create a regex for finding this tag within a comma-separated string
-        pattern = f"[^,\w]*{tag}[,\w$]*"
+        pattern = f"[^,\\w]*{tag}[,\\w$]*"
 
         # Find all parameter values which have the same tag
         part_ids = part.models.PartParameter.objects.filter(
