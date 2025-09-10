@@ -45,4 +45,10 @@ setuptools.setup(
             "SerialNumberTags = serial_number_tags.core:SerialNumberTags"
         ]
     },
+    classifiers=[
+        "Programming Language :: Python :: 3",
+        "Operating System :: OS Independent",
+        "Framework :: InvenTree",
+    ],
 )
+
