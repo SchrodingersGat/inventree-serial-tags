@@ -51,4 +51,3 @@ setuptools.setup(
         "Framework :: InvenTree",
     ],
 )
-
