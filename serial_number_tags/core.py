@@ -13,7 +13,7 @@ from plugin.mixins import SettingsMixin, ValidationMixin
 from . import PLUGIN_VERSION
 
 parameter_template_model = None
-legacy_parameter : bool = False
+legacy_parameter: bool = False
 
 try:
     from common.models import ParameterTemplate
@@ -22,7 +22,6 @@ except ImportError:
     from part.models import PartParameterTemplate
     legacy_parameter = True
     parameter_template_model = PartParameterTemplate
-    
 
 
 logger = logging.getLogger('inventree')
