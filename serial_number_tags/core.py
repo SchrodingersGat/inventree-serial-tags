@@ -12,18 +12,7 @@ from plugin.mixins import SettingsMixin, ValidationMixin
 
 from . import PLUGIN_VERSION
 
-parameter_template_model = None
-legacy_parameter: bool = False
-
-# Attempt to import the ParameterTemplate model from the common app
-# falling back to the PartParameterTemplate for older versions
-try:
-    from common.models import ParameterTemplate
-    parameter_template_model = ParameterTemplate
-except ImportError:
-    from part.models import PartParameterTemplate
-    legacy_parameter = True
-    parameter_template_model = PartParameterTemplate
+from common.models import Parameter, ParameterTemplate
 
 
 logger = logging.getLogger('inventree')
@@ -44,12 +33,14 @@ class SerialNumberTags(SettingsMixin, ValidationMixin, InvenTreePlugin):
     WEBSITE = "https://github.com/SchrodingersGat/inventree-serial-tags"
     LICENSE = "MIT"
 
+    MIN_VERSION = '1.3.0'
+
     # Plugin settings (from SettingsMixin)
     SETTINGS = {
         "TAG_PARAMETER": {
             "name": "Tag Parameter",
             "description": "Parameter used to tag parts for serial number uniqueness",
-            "model": "part.partparametertemplate" if legacy_parameter else "common.parametertemplate",
+            "model": "common.parametertemplate",
         }
     }
     
@@ -58,7 +49,7 @@ class SerialNumberTags(SettingsMixin, ValidationMixin, InvenTreePlugin):
         """Return the parameter template used to tag parts."""
         if template_id := self.get_setting('TAG_PARAMETER'):
             try:
-                template = parameter_template_model.objects.get(pk=template_id)
+                template = ParameterTemplate.objects.get(pk=template_id)
                 return template
             except Exception:
                 logger.error(f"Failed to load 'TAG_PARAMETER' template {template_id}")
@@ -131,10 +122,16 @@ class SerialNumberTags(SettingsMixin, ValidationMixin, InvenTreePlugin):
 
         if not template:
             return []
+        
+        # Find all parts within the same tree
+        part_ids = part.models.Part.objects.filter(
+            tree_id=part_instance.tree_id
+        ).values_list('id', flat=True)
 
         # Does this part (or any parts in the part tree) have the required parameter?
-        parameter = parameter_template_model.objects.filter(
-            part__tree_id=part_instance.tree_id,
+        parameter = Parameter.objects.filter(
+            model_type=part_instance.get_content_type(),
+            model_id__in=part_ids,
             template=template
         ).first()
 
@@ -154,11 +151,15 @@ class SerialNumberTags(SettingsMixin, ValidationMixin, InvenTreePlugin):
         # Create a regex for finding this tag within a comma-separated string
         pattern = f"[^,\\w]*{tag}[,\\w$]*"
 
-        # Find all parameter values which have the same tag
-        part_ids = parameter_template_model.objects.filter(
+        # Find all Parameter values which have the same tag
+        parameters = Parameter.objects.filter(
             template=template,
-            data__iregex=pattern
-        ).values_list('part_id', flat=True)
+            data__iregex=pattern,
+            model_type=part.models.Part.get_content_type()
+        )
+
+        # Find all parameter values which have the same tag
+        part_ids = parameters.values_list('model_id', flat=True)
 
         # Find all part "trees" which have the same tag
         trees = part.models.Part.objects.filter(
