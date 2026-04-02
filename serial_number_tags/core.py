@@ -15,6 +15,8 @@ from . import PLUGIN_VERSION
 parameter_template_model = None
 legacy_parameter: bool = False
 
+# Attempt to import the ParameterTemplate model from the common app
+# falling back to the PartParameterTemplate for older versions
 try:
     from common.models import ParameterTemplate
     parameter_template_model = ParameterTemplate
