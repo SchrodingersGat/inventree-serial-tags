@@ -133,7 +133,7 @@ class SerialNumberTags(SettingsMixin, ValidationMixin, InvenTreePlugin):
             return []
 
         # Does this part (or any parts in the part tree) have the required parameter?
-        parameter = part.models.PartParameter.objects.filter(
+        parameter = parameter_template_model.objects.filter(
             part__tree_id=part_instance.tree_id,
             template=template
         ).first()
@@ -155,7 +155,7 @@ class SerialNumberTags(SettingsMixin, ValidationMixin, InvenTreePlugin):
         pattern = f"[^,\\w]*{tag}[,\\w$]*"
 
         # Find all parameter values which have the same tag
-        part_ids = part.models.PartParameter.objects.filter(
+        part_ids = parameter_template_model.objects.filter(
             template=template,
             data__iregex=pattern
         ).values_list('part_id', flat=True)
