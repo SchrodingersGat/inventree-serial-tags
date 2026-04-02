@@ -12,6 +12,19 @@ from plugin.mixins import SettingsMixin, ValidationMixin
 
 from . import PLUGIN_VERSION
 
+parameter_template_model = None
+legacy_parameter: bool = False
+
+# Attempt to import the ParameterTemplate model from the common app
+# falling back to the PartParameterTemplate for older versions
+try:
+    from common.models import ParameterTemplate
+    parameter_template_model = ParameterTemplate
+except ImportError:
+    from part.models import PartParameterTemplate
+    legacy_parameter = True
+    parameter_template_model = PartParameterTemplate
+
 
 logger = logging.getLogger('inventree')
 
@@ -36,7 +49,7 @@ class SerialNumberTags(SettingsMixin, ValidationMixin, InvenTreePlugin):
         "TAG_PARAMETER": {
             "name": "Tag Parameter",
             "description": "Parameter used to tag parts for serial number uniqueness",
-            "model": "part.partparametertemplate",
+            "model": "part.partparametertemplate" if legacy_parameter else "common.parametertemplate",
         }
     }
     
@@ -45,10 +58,10 @@ class SerialNumberTags(SettingsMixin, ValidationMixin, InvenTreePlugin):
         """Return the parameter template used to tag parts."""
         if template_id := self.get_setting('TAG_PARAMETER'):
             try:
-                template = part.models.PartParameterTemplate.objects.get(pk=template_id)
+                template = parameter_template_model.objects.get(pk=template_id)
                 return template
             except Exception:
-                logger.error(f"Failed to load parameter template {template_id}")
+                logger.error(f"Failed to load 'TAG_PARAMETER' template {template_id}")
                 return None
 
         return None
